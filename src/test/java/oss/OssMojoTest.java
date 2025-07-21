@@ -22,6 +22,6 @@ public class OssMojoTest {
                 System.getenv("ALIBABA_CLOUD_ACCESS_KEY_SECRET"), "oss-cn-shanghai.aliyuncs.com");
         // 获取当前target目录下的jar包
         File file = new File("D:\\Project\\oss-maven-plugin\\target\\oss-maven-plugin-1.0.0-SNAPSHOT.jar");
-        String url = fileStrategy.uploadFile(new File[]{file}, "test", "redbook-user");
+        // String url = fileStrategy.uploadFile(new File[]{file}, "test", "redbook-user");
     }
 }

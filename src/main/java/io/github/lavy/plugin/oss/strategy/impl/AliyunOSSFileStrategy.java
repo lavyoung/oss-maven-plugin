@@ -31,7 +31,7 @@ public class AliyunOSSFileStrategy implements FileStrategy {
     }
 
     @Override
-    public String uploadFile(File[] files, String path, String bucketName) {
+    public void uploadFile(File[] files, String path, String bucketName) {
         if (files == null || files.length == 0 || bucketName == null || bucketName.isEmpty()) {
             throw new RuntimeException("上传文件失败：参数为空");
         }
@@ -52,7 +52,6 @@ public class AliyunOSSFileStrategy implements FileStrategy {
                 logger.error("上传文件失败：" + e);
             }
         }
-        return firstFileUrl;
     }
 
     @Override

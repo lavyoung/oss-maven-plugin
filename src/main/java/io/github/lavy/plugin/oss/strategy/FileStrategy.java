@@ -18,9 +18,8 @@ public interface FileStrategy {
      *
      * @param files 文件
      * @param bucketName 存储桶名称
-     * @return 文件上传路径
      */
-    String uploadFile(File[] files, String path, String bucketName);
+    void uploadFile(File[] files, String path, String bucketName);
 
     /**
      * 关闭连接

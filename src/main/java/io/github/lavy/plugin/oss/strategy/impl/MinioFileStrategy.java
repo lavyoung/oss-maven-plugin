@@ -36,21 +36,12 @@ public class MinioFileStrategy implements FileStrategy {
      *
      * @param files 文件
      * @param bucketName 存储桶名称
-     * @return 文件访问地址
-     */
-    /**
-     * 上传文件
-     *
-     * @param files 文件
-     * @param bucketName 存储桶名称
-     * @return 第一个文件的访问地址（示例）
      */
     @Override
-    public String uploadFile(File[] files, String path, String bucketName) {
+    public void uploadFile(File[] files, String path, String bucketName) {
         if (files == null || files.length == 0 || bucketName == null || bucketName.isEmpty()) {
             throw new RuntimeException("上传文件失败：参数为空");
         }
-        String firstFileUrl = "";
         for (File file : files) {
             if (file == null || !file.exists() || !file.canRead()) {
                 logger.warn("跳过无效文件：" + (file != null ? file.getName() : "null"));
@@ -65,12 +56,11 @@ public class MinioFileStrategy implements FileStrategy {
                                         PutObjectBaseArgs.MIN_MULTIPART_SIZE)
                                 .object(path + "/" + file.getName())
                                 .build());
-                logger.info("上传文件成功：{}" + file.getName());
+                logger.info("上传文件成功：" + file.getName());
             } catch (Exception e) {
-                logger.error("上传文件失败：{}，错误：{}" + e);
+                logger.error("上传文件失败，错误：{}" + e);
             }
         }
-        return firstFileUrl;
     }
 
     @Override

@@ -18,7 +18,7 @@ import io.github.lavy.plugin.oss.strategy.FileStrategy;
  * @version: v1.0.0
  * @description: OssMojo
  */
-@Mojo(name = "op", defaultPhase = LifecyclePhase.PACKAGE)
+@Mojo(name = "oss-upload", defaultPhase = LifecyclePhase.PACKAGE)
 public class OssMojo extends AbstractMojo {
 
     @Parameter(property = "oss.provider", required = true, defaultValue = "aliyun")

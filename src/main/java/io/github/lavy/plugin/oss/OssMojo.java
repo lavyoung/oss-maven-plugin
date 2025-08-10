@@ -8,11 +8,15 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.github.lavy.plugin.oss.factory.FileStrategyFactory;
 import io.github.lavy.plugin.oss.strategy.FileStrategy;
 
 /**
+ * OssMojo
+ *
  * @author <a href="lavyoung1325@outlook.com">lavy</a>
  * @date: 2025/7/20
  * @version: v1.0.0
@@ -20,6 +24,8 @@ import io.github.lavy.plugin.oss.strategy.FileStrategy;
  */
 @Mojo(name = "oss-upload", defaultPhase = LifecyclePhase.PACKAGE)
 public class OssMojo extends AbstractMojo {
+
+    private static final Logger logger = LoggerFactory.getLogger(OssMojo.class);
 
     @Parameter(property = "oss.provider", required = true, defaultValue = "aliyun")
     private String provider;
@@ -33,7 +39,7 @@ public class OssMojo extends AbstractMojo {
     private String bucketName;
     @Parameter(property = "oss.ossPath", defaultValue = "")
     private String ossPath;
-    @Parameter(property = "oss.filePath", defaultValue = "${project.build.directory}")
+    @Parameter(property = "oss.filePath", defaultValue = "")
     private File filePath;
     @Parameter(property = "oss.fileSuffix", defaultValue = "jar")
     private String fileSuffix;
@@ -50,25 +56,25 @@ public class OssMojo extends AbstractMojo {
         if (filePath == null || !filePath.exists() || !filePath.isDirectory()) {
             throw new MojoFailureException("Invalid file path: must be a valid directory");
         }
-
         if (bucketName == null || bucketName.isEmpty()) {
             throw new MojoFailureException("Bucket name is not specified");
         }
-        FileStrategy fileStrategy = FileStrategyFactory.getFileStrategy(provider, accessKeyId, accessKeySecret, endpoint);
-        // 日志记录：开始执行
-        getLog().info("Starting file upload process from: " + filePath.getAbsolutePath());
+        FileStrategy fileStrategy =
+                FileStrategyFactory.getFileStrategy(provider, accessKeyId, accessKeySecret, endpoint);
+        // logger start
+        logger.info("Starting file upload process from: {}", filePath.getAbsolutePath());
 
-        // 1. 扫描 filePath 下匹配后缀的文件
+        // 1. scan filePath files
         File[] files = filePath.listFiles((dir, name) -> name.endsWith(fileSuffix));
         if (files == null || files.length == 0) {
-            getLog().warn("No files found matching the criteria.");
+            logger.warn("No files found matching the criteria.");
             return;
         }
 
-        // 2. 使用 OSSClient 上传至指定 Bucket
+        // 2. oss upload
         fileStrategy.uploadFile(files, ossPath, bucketName);
-        // 3. 关闭 OSSClient
+        // 3. shutdown client
         fileStrategy.shoutdown();
-        getLog().info("File upload process completed.");
+        logger.info("File upload process completed.");
     }
 }

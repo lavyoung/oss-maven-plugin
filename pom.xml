@@ -4,7 +4,7 @@
 
     <groupId>io.github.lavyoung</groupId>
     <artifactId>oss-maven-plugin</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.2.1</version>
 
     <packaging>maven-plugin</packaging>
 
@@ -24,27 +24,32 @@
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
         </license>
     </licenses>
 
     <scm>
-        <connection>https://github.com/lavyoung/oss-maven-plugin.git</connection>
-        <developerConnection>https://github.com/lavyoung/oss-maven-plugin.git</developerConnection>
+        <connection>scm:git:https://github.com/lavyoung/oss-maven-plugin.git</connection>
+        <developerConnection>scm:git:https://github.com/lavyoung/oss-maven-plugin.git</developerConnection>
         <url>https://github.com/lavyoung/oss-maven-plugin</url>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
         <filePath>${project.build.directory}</filePath>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
-        <maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
+        <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
+        <gpg.executable>gpg</gpg.executable>
+        <gpg.keyname>D87845AC5DE4B94998AAACAEFF2383FA0CEEEE00</gpg.keyname>
         <maven-plugin-api.version>3.5.2</maven-plugin-api.version>
         <maven-plugin-annotations.version>3.5.2</maven-plugin-annotations.version>
-        <maven-plugin-plugin.version>3.5.2</maven-plugin-plugin.version>
+        <maven-plugin-plugin.version>3.16.0</maven-plugin-plugin.version>
         <plexus-utils.version>3.0.8</plexus-utils.version>
         <junit.version>4.8.2</junit.version>
         <minio.version>8.5.17</minio.version>
@@ -104,17 +109,6 @@
         </dependency>
     </dependencies>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
-
     <build>
         <plugins>
             <plugin>
@@ -141,22 +135,13 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>${central-publishing-maven-plugin.version}</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <!-- 注意：这类必须要和Maven配置环境中的server id对应上 -->
-                    <publishingServerId>central</publishingServerId>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>${maven-source-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar-no-fork</goal>
                         </goals>
@@ -170,6 +155,7 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
             <plugin>
@@ -179,34 +165,69 @@
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>
                 <configuration>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <charset>${project.build.sourceEncoding}</charset>
+                    <docencoding>${project.build.sourceEncoding}</docencoding>
                     <doclint>none</doclint>
+                    <quiet>true</quiet>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>${maven-gpg-plugin.version}</version>
-                <configuration>
-                    <executable>gpg</executable>
-                    <keyname>lavy</keyname>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>central-snapshot</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+
+        <profile>
+            <id>central-release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central-publishing-maven-plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven-gpg-plugin.version}</version>
+                        <configuration>
+                            <executable>${gpg.executable}</executable>
+                            <keyname>${gpg.keyname}</keyname>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

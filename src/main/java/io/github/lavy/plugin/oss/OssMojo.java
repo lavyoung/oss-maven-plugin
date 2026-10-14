@@ -1,6 +1,10 @@
 package io.github.lavy.plugin.oss;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -59,22 +63,48 @@ public class OssMojo extends AbstractMojo {
         if (bucketName == null || bucketName.isEmpty()) {
             throw new MojoFailureException("Bucket name is not specified");
         }
-        FileStrategy fileStrategy =
-                FileStrategyFactory.getFileStrategy(provider, accessKeyId, accessKeySecret, endpoint);
-        // logger start
-        logger.info("Starting file upload process from: {}", filePath.getAbsolutePath());
+        logger.info("Starting file upload process from: {}, all [{}] suffix files", filePath.getAbsolutePath(), fileSuffix);
 
-        // 1. scan filePath files
-        File[] files = filePath.listFiles((dir, name) -> name.endsWith(fileSuffix));
+        Set<String> suffixSet = parseFileSuffixes(fileSuffix);
+        File[] files = filePath.listFiles((dir, name) -> {
+            for (String s : suffixSet) {
+                if (name.endsWith(s)) {
+                    return true;
+                }
+            }
+            return false;
+        });
         if (files == null || files.length == 0) {
             logger.warn("No files found matching the criteria.");
             return;
         }
 
-        // 2. oss upload
-        fileStrategy.uploadFile(files, ossPath, bucketName);
-        // 3. shutdown client
-        fileStrategy.shoutdown();
-        logger.info("File upload process completed.");
+        FileStrategy fileStrategy =
+                FileStrategyFactory.getFileStrategy(provider, accessKeyId, accessKeySecret, endpoint);
+        try {
+            fileStrategy.uploadFile(files, ossPath, bucketName);
+        } finally {
+            fileStrategy.shutdown();
+            logger.info("File upload process completed. client shutdown!");
+        }
+    }
+
+    static Set<String> parseFileSuffixes(String fileSuffix) throws MojoFailureException {
+        if (fileSuffix == null || fileSuffix.trim().isEmpty()) {
+            throw new MojoFailureException("File suffix is not specified");
+        }
+        Set<String> suffixSet = Arrays.stream(fileSuffix.split(","))
+                .map(String::trim)
+                .filter(suffix -> !suffix.isEmpty())
+                .map(OssMojo::normalizeSuffix)
+                .collect(Collectors.toCollection(HashSet::new));
+        if (suffixSet.isEmpty()) {
+            throw new MojoFailureException("File suffix is not specified");
+        }
+        return suffixSet;
+    }
+
+    private static String normalizeSuffix(String suffix) {
+        return suffix.startsWith(".") ? suffix : "." + suffix;
     }
 }

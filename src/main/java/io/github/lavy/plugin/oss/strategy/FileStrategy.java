@@ -1,7 +1,6 @@
 package io.github.lavy.plugin.oss.strategy;
 
 import java.io.File;
-import java.util.List;
 
 
 /**
@@ -11,7 +10,6 @@ import java.util.List;
  * @description: file strategy
  */
 public interface FileStrategy {
-
 
     /**
      * upload file
@@ -24,5 +22,16 @@ public interface FileStrategy {
     /**
      * 关闭连接
      */
-    default void shoutdown(){};
+    default void shutdown() {
+        shoutdown();
+    }
+
+    /**
+     * 关闭连接。
+     *
+     * @deprecated use {@link #shutdown()} instead.
+     */
+    @Deprecated
+    default void shoutdown() {
+    }
 }
